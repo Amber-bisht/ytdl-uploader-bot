@@ -10,6 +10,14 @@ async def split_video(file_path: str, duration: int) -> List[str]:
     Splits a video file if it exceeds the MAX_SIZE limit.
     Returns a list of file paths (either the original if no split, or the split parts).
     """
+    # Guard against zero or missing duration — prevents FFmpeg receiving -t 0,
+    # which produces empty/corrupt output files instead of raising an error.
+    if not duration or duration <= 0:
+        raise ValueError(
+            f"Invalid video duration ({duration}s) — cannot split safely. "
+            "The video may be a livestream or yt-dlp failed to detect its length."
+        )
+
     size = os.path.getsize(file_path)
     if size <= MAX_SIZE:
         return [file_path]
@@ -43,6 +51,13 @@ async def split_video(file_path: str, duration: int) -> List[str]:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
-        await process.communicate()
+        # Capture stderr and check exit code — FFmpeg can fail silently without this,
+        # leading to zero-byte or corrupt part files being uploaded to Telegram.
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"FFmpeg failed on part {i+1} (exit code {process.returncode}): "
+                f"{stderr.decode().strip()}"
+            )
         
     return output_files
