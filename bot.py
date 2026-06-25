@@ -32,7 +32,10 @@ if not all([API_ID, API_HASH, BOT_TOKEN]):
     print("Please set API_ID, API_HASH, and BOT_TOKEN in .env file.")
     exit(1)
 
-AUTHORIZED_CHAT_ID = 8548171555
+AUTHORIZED_CHAT_ID = int(os.getenv("AUTHORIZED_CHAT_ID", "0"))
+if not AUTHORIZED_CHAT_ID:
+    print("Please set AUTHORIZED_CHAT_ID in your .env file.")
+    exit(1)
 auth_filter = filters.chat(AUTHORIZED_CHAT_ID)
 
 # Initialize the Pyrogram Client
