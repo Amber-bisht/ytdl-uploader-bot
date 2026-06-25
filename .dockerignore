@@ -4,3 +4,7 @@ __pycache__/
 .env
 .git/
 downloads/
+cookies.txt
+*.session
+*.session-journal
+test_downloads/
