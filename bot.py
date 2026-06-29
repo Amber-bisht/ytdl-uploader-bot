@@ -302,7 +302,14 @@ async def ytdl_command(client: Client, message: Message):
                 # Cleanup the part if it's a split part
                 if part_path != file_path and os.path.exists(part_path):
                     os.remove(part_path)
-                    
+
+        # Clean up any remaining split parts that were never uploaded.
+        # Without this, a /cancel mid-upload silently leaks temp files on disk.
+        if cancel_flags.get(chat_id):
+            for remaining in parts:
+                if remaining != file_path and os.path.exists(remaining):
+                    os.remove(remaining)
+
         # Cleanup original file and thumb
         if os.path.exists(file_path): os.remove(file_path)
         if thumb_path and os.path.exists(thumb_path): os.remove(thumb_path)
