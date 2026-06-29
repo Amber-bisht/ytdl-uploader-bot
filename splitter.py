@@ -53,11 +53,16 @@ async def split_video(file_path: str, duration: int) -> List[str]:
         )
         # Capture stderr and check exit code — FFmpeg can fail silently without this,
         # leading to zero-byte or corrupt part files being uploaded to Telegram.
-        stdout, stderr = await process.communicate()
+        _, stderr = await process.communicate()
         if process.returncode != 0:
+            # Clean up any parts already created before raising,
+            # otherwise they stay on disk with no one to delete them.
+            for created in output_files:
+                if os.path.exists(created):
+                    os.remove(created)
+            error_msg = stderr.decode().strip()[-500:]  # truncate to avoid Telegram message limits
             raise RuntimeError(
-                f"FFmpeg failed on part {i+1} (exit code {process.returncode}): "
-                f"{stderr.decode().strip()}"
+                f"FFmpeg failed on part {i+1} (exit code {process.returncode}): {error_msg}"
             )
         
     return output_files

@@ -305,8 +305,8 @@ async def ytdl_command(client: Client, message: Message):
 
         # Clean up any remaining split parts that were never uploaded.
         # Without this, a /cancel mid-upload silently leaks temp files on disk.
-        if cancel_flags.get(chat_id) and len(parts) > 1:
-            for remaining in parts[part_idx + 1:]:
+        if cancel_flags.get(chat_id):
+            for remaining in parts:
                 if remaining != file_path and os.path.exists(remaining):
                     os.remove(remaining)
 
